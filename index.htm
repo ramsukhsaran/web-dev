@@ -3,18 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Number Facts</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Post Viewer</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
     <style>
-        #fact{
+        #fact {
             display: none;
         }
-        span{
-            margin-left: 50%;
-            margin-top: 2%;
+        #nw-status {
+            margin-top: 1rem;
         }
-        
     </style>
 </head>
 <body class="bg-dark">
@@ -22,24 +19,72 @@
        <div class="row">
            <div class="col-md-6 mx-auto">
                <div class="card bg-primary text-white mt-5 p-4">
-                   <h1>Number Facts</h1>
-                   <p>Enter A Number and Get a random Fact</p>
-                   <input id="numberInput" placeholder="Enter Any Number" type="number" class="form-control form-control-lg">
-                   <span id="nw-status"></span>
-                   <div id="fact" class="card-body">
-                            
-                       <h4 class="card-title text-dark">Number Fact:</h4>
+                   <h1>Random Post Viewer</h1>
+                   <p>Enter a post ID (1-100) to view a specific post, or leave blank for a random one.</p>
+                   <input id="numberInput" placeholder="Enter Post ID (optional)" type="number" min="1" max="100" class="form-control form-control-lg">
+                   <div id="nw-status"></div>
+                   <div id="fact" class="card-body mt-3">
+                       <h4 class="card-title text-dark">Post Title:</h4>
+                       <h5 id="postTitle" class="text-dark"></h5>
+                       <h4 class="card-title text-dark mt-4">Post Body:</h4>
                        <p id="factText" class="card-text jumbotron text-dark"></p>
-
                    </div>
                 </div>
-                
            </div>
        </div>
    </div>
 
+   <script>
+       let fact = document.querySelector('#fact');
+       let postTitle = document.querySelector('#postTitle');
+       let factText = document.querySelector('#factText');
+       let numberInput = document.querySelector('#numberInput');
 
-   
-   <script src="index.js"></script>
+       // Load a random post on page load
+       window.addEventListener('load', getPostAjax);
+
+       // Also fetch when input loses focus (blur)
+       numberInput.addEventListener('blur', getPostAjax);
+
+       function getPostAjax() {
+           let inputValue = numberInput.value.trim();
+           let postId;
+
+           if (inputValue === '' || isNaN(inputValue) || inputValue < 1 || inputValue > 100) {
+               // Generate random ID between 1 and 100
+               postId = Math.floor(Math.random() * 100) + 1;
+           } else {
+               postId = parseInt(inputValue);
+           }
+
+           let url = `https://jsonplaceholder.typicode.com/posts/${postId}`;
+
+           let xhr = new XMLHttpRequest();
+           xhr.open('GET', url, true);
+           xhr.send();
+
+           // Adding loading UI
+           let status = document.getElementById('nw-status');
+           status.innerHTML = '<div class="spinner-border text-light" role="status"><span class="sr-only">Loading...</span></div>';
+           status.style.display = 'block';
+
+           xhr.onreadystatechange = function() {
+               if (xhr.readyState === 4) {
+                   status.style.display = 'none'; // Remove loader
+
+                   if (xhr.status === 200) {
+                       let data = JSON.parse(this.responseText);
+                       fact.style.display = 'block';
+                       postTitle.innerText = data.title;
+                       factText.innerText = data.body;
+                   } else {
+                       fact.style.display = 'block';
+                       postTitle.innerText = 'Error';
+                       factText.innerText = 'Oops! Something went wrong while fetching the post.';
+                   }
+               }
+           };
+       }
+   </script>
 </body>
 </html>
